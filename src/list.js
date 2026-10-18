@@ -20,6 +20,7 @@ export function initList(refresh) {
 
     const button = target.closest('button[data-action]');
     if (!(button instanceof HTMLButtonElement) || !results.contains(button)) return;
+    if (button.dataset.action !== 'toggle' && button.dataset.action !== 'details') return;
 
     const card = button.closest('li[data-id]');
     if (!(card instanceof HTMLLIElement) || !results.contains(card)) return;

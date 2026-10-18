@@ -7,8 +7,19 @@
  * @returns {Filters}
  */
 export function readFilters() {
-  // TODO C3
-  return {};
+  const form = document.querySelector('#filters');
+  if (!(form instanceof HTMLFormElement)) throw new TypeError('Не знайдено форму #filters');
+
+  const query = form.elements.namedItem('query');
+  const genre = form.elements.namedItem('genre');
+  const mine = form.elements.namedItem('mine');
+  if (!(query instanceof HTMLInputElement)) throw new TypeError('Не знайдено поле query у #filters');
+  if (!(genre instanceof HTMLSelectElement)) throw new TypeError('Не знайдено поле genre у #filters');
+  if (!(mine instanceof HTMLInputElement) || mine.type !== 'checkbox') {
+    throw new TypeError('Не знайдено прапорець mine у #filters');
+  }
+
+  return { query: query.value, genre: genre.value, mine: mine.checked };
 }
 
 /**
@@ -18,5 +29,28 @@ export function readFilters() {
  * @param {() => void} refresh перемальовує список для поточних фільтрів
  */
 export function initFilters(refresh) {
-  // TODO C3
+  const form = document.querySelector('#filters');
+  if (!(form instanceof HTMLFormElement)) throw new TypeError('Не знайдено форму #filters');
+
+  const query = form.elements.namedItem('query');
+  const genre = form.elements.namedItem('genre');
+  const mine = form.elements.namedItem('mine');
+  if (!(query instanceof HTMLInputElement)) throw new TypeError('Не знайдено поле query у #filters');
+  if (!(genre instanceof HTMLSelectElement)) throw new TypeError('Не знайдено поле genre у #filters');
+  if (!(mine instanceof HTMLInputElement) || mine.type !== 'checkbox') {
+    throw new TypeError('Не знайдено прапорець mine у #filters');
+  }
+
+  query.addEventListener('input', refresh);
+  genre.addEventListener('change', refresh);
+  mine.addEventListener('change', refresh);
+
+  form.addEventListener('submit', (event) => event.preventDefault());
+  form.addEventListener('reset', (event) => {
+    event.preventDefault();
+    query.value = '';
+    genre.value = '';
+    mine.checked = false;
+    refresh();
+  });
 }
