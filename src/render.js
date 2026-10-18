@@ -14,61 +14,64 @@ export function renderShows(list) {
   const status = document.querySelector('#status');
   const count = document.querySelector('#watchlist-count');
 
-  if (!(results instanceof HTMLUListElement)) throw new TypeError('Не знайдено список #results');
-  if (!(template instanceof HTMLTemplateElement)) throw new TypeError('Не знайдено шаблон #show-card');
-  if (!(status instanceof HTMLElement)) throw new TypeError('Не знайдено рядок статусу #status');
+  if (!results || !template || !status) return;
 
   const cards = list.map((show) => {
-    const cardTemplate = template.content.firstElementChild;
-    if (!(cardTemplate instanceof HTMLLIElement)) {
-      throw new TypeError('Шаблон #show-card не містить картку <li>');
-    }
-    const card = cardTemplate.cloneNode(true);
+    const clone = template.content.firstElementChild.cloneNode(true);
 
-    card.dataset.id = String(show.id);
+    // Зберігаємо id
+    clone.dataset.id = String(show.id);
+
+    // Основна інформація через textContent (C1.2, C1.3)
     const fields = {
-      name: show.name,
-      year: show.year === null ? '—' : String(show.year),
-      genres: show.genres.length ? show.genres.join(', ') : '—',
-      rating: show.rating === null ? '—' : String(show.rating),
+      name: show.name ?? '—',
+      year: show.year === null || show.year === undefined ? '—' : String(show.year),
+      genres: show.genres && show.genres.length ? show.genres.join(', ') : '—',
+      rating: show.rating === null || show.rating === undefined ? '—' : String(show.rating),
     };
 
     for (const [field, value] of Object.entries(fields)) {
-      card.querySelectorAll(`[data-field="${field}"]`).forEach((element) => {
-        element.textContent = value;
+      clone.querySelectorAll(`[data-field="${field}"]`).forEach((el) => {
+        el.textContent = value;
       });
     }
 
-    const toggle = card.querySelector('[data-action="toggle"]');
-    if (!(toggle instanceof HTMLButtonElement)) {
-      throw new TypeError(`У шаблоні #show-card немає кнопки [data-action="toggle"]`);
+    // Налаштування кнопки "До списку" (C1.5, C2.2)
+    const toggleBtn = clone.querySelector('[data-action="toggle"]');
+    if (toggleBtn) {
+      toggleBtn.setAttribute('aria-pressed', String(watchlist.has(show.id)));
+      toggleBtn.setAttribute('aria-label', `До списку: ${show.name}`);
     }
-    toggle.setAttribute('aria-pressed', String(watchlist.has(show.id)));
 
+    // Налаштування кнопки "Детальніше" (C1.5)
+    const detailsBtn = clone.querySelector('[data-action="details"]');
+    if (detailsBtn) {
+      detailsBtn.setAttribute('aria-label', `Детальніше про ${show.name}`);
+    }
+
+    // Поля моєї оцінки та нотатки (C4)
     const note = notes.get(show.id);
-    const mine = card.querySelector('.card__mine');
-    const noteElement = card.querySelector('.card__note');
-    const ratingElement = card.querySelector('[data-field="my-rating"]');
-    const noteTextElement = card.querySelector('[data-field="note"]');
-    if (
-      !(mine instanceof HTMLElement) ||
-      !(noteElement instanceof HTMLElement) ||
-      !(ratingElement instanceof HTMLElement) ||
-      !(noteTextElement instanceof HTMLElement)
-    ) {
-      throw new TypeError('У шаблоні #show-card немає полів моєї оцінки й нотатки');
-    }
-    mine.hidden = !note;
-    noteElement.hidden = !note?.text;
-    ratingElement.textContent = note ? String(note.rating) : '';
-    noteTextElement.textContent = note?.text ?? '';
+    const mineEl = clone.querySelector('.card__mine');
+    const noteEl = clone.querySelector('.card__note');
+    const ratingEl = clone.querySelector('[data-field="my-rating"]');
+    const noteTextEl = clone.querySelector('[data-field="note"]');
 
-    return card;
+    if (mineEl) mineEl.hidden = !note;
+    if (noteEl) noteEl.hidden = !note?.text;
+    if (ratingEl) ratingEl.textContent = note ? String(note.rating) : '';
+    if (noteTextEl) noteTextEl.textContent = note?.text ?? '';
+
+    return clone;
   });
 
+  // Оновлюємо список і статус (C1.1, C1.6, C1.7)
   results.replaceChildren(...cards);
+
   status.textContent = list.length
     ? `Знайдено: ${list.length} з ${shows.length}`
     : 'Нічого не знайдено';
-  if (count) count.textContent = String(watchlist.size);
+
+  if (count) {
+    count.textContent = String(watchlist.size);
+  }
 }
